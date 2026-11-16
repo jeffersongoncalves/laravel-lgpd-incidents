@@ -1,0 +1,72 @@
+{
+    "name": "jeffersongoncalves/laravel-lgpd-incidents",
+    "description": "LGPD security incident register for Laravel: track incidents, risk assessment and the 3-business-day ANPD and data subject notification deadline (Resolução CD/ANPD 15/2024).",
+    "keywords": [
+        "laravel",
+        "lgpd",
+        "incident",
+        "data-breach",
+        "security-incident",
+        "anpd",
+        "privacy",
+        "gdpr"
+    ],
+    "homepage": "https://github.com/jeffersongoncalves/laravel-lgpd-incidents",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Jefferson Gonçalves",
+            "email": "gerson.simao.92@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "spatie/laravel-package-tools": "^1.16",
+        "illuminate/contracts": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.24",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "JeffersonGoncalves\\LgpdIncidents\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JeffersonGoncalves\\LgpdIncidents\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "analyse": "vendor/bin/phpstan analyse"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JeffersonGoncalves\\LgpdIncidents\\LgpdIncidentsServiceProvider"
+            ],
+            "aliases": {
+                "LgpdIncidents": "JeffersonGoncalves\\LgpdIncidents\\Facades\\LgpdIncidents"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
