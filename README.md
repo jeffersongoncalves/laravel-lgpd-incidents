@@ -1,26 +1,59 @@
-<div class="filament-hidden">
+# Laravel LGPD Incidents
 
-<!-- banner: art/jeffersongoncalves-laravel-lgpd-incidents.png (generate via portfolio-banner skill) -->
+![Laravel LGPD Incidents](https://raw.githubusercontent.com/jeffersongoncalves/laravel-lgpd-incidents/main/art/jeffersongoncalves-laravel-lgpd-incidents.png)
 
-</div>
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/jeffersongoncalves/laravel-lgpd-incidents.svg?style=flat-square)](https://packagist.org/packages/jeffersongoncalves/laravel-lgpd-incidents)
+[![Tests](https://img.shields.io/github/actions/workflow/status/jeffersongoncalves/laravel-lgpd-incidents/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/jeffersongoncalves/laravel-lgpd-incidents/actions/workflows/tests.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/jeffersongoncalves/laravel-lgpd-incidents.svg?style=flat-square)](https://packagist.org/packages/jeffersongoncalves/laravel-lgpd-incidents)
 
-# LgpdIncidents
+A register of security incidents involving personal data, following the Brazilian General Data Protection Law (LGPD, art. 48) and the ANPD's incident regulation (Resolução CD/ANPD 15/2024).
 
-LGPD security incident register for Laravel: track incidents, risk assessment and the 3-business-day ANPD and data subject notification deadline (Resolução CD/ANPD 15/2024).
+- **Deadline in business days:** you have 3 business days, counted from when you learned the incident affected personal data, to notify the ANPD and the data subjects (art. 6 and 9). Weekends and Brazilian holidays are skipped with [laravel-brazil-holidays](https://github.com/jeffersongoncalves/laravel-brazil-holidays).
+- **Risk assessment:** only incidents that may cause relevant risk or damage must be communicated. An incident assessed as low risk no longer counts down, and you keep the reasoning on record.
+- **Kept for 5 years:** the register must be kept for at least 5 years (art. 10), so younger records can't be deleted.
+
+> This package gives you tooling. It does not make you compliant on its own. It does not send anything to the ANPD: the communication is made through the ANPD's own channel, and you record the protocol here.
 
 ## Installation
 
-You can install the package via composer:
-
 ```bash
 composer require jeffersongoncalves/laravel-lgpd-incidents
+php artisan vendor:publish --tag="lgpd-incidents-migrations"
+php artisan migrate
 ```
+
+Small processing agents get double the time (Resolução CD/ANPD 2/2022, art. 14): publish the config and set `deadline_business_days` to `6`. Add state or city holidays in laravel-brazil-holidays' `extra` config.
 
 ## Usage
 
 ```php
-// TODO
+use JeffersonGoncalves\LgpdIncidents\Enums\Risk;
+use JeffersonGoncalves\LgpdIncidents\Facades\LgpdIncidents;
+
+$incident = LgpdIncidents::open('Database backup exposed', discoveredAt: now(), attributes: [
+    'description' => 'A backup bucket was public for 2 hours.',
+    'data_categories' => ['personal', 'financial'],
+    'affected_subjects' => 1200,
+]);
+
+$incident->due_at;   // end of the 3rd business day after discovery
+
+LgpdIncidents::assess($incident, Risk::Relevant);
+LgpdIncidents::notifyAnpd($incident, protocol: 'ANPD-2026-0042');
+LgpdIncidents::notifySubjects($incident);
+LgpdIncidents::close($incident, measures: 'Bucket made private, credentials rotated.');
 ```
+
+`$incident->isPending()` is true while a communication is still owed. It stays false for incidents assessed as low risk or closed. `isOverdue()` is true when that communication is past the deadline. Both are also query scopes: `Incident::query()->scopes('overdue')`.
+
+### Overdue alerts
+
+```php
+// routes/console.php
+Schedule::command('lgpd:incidents-overdue')->hourly();
+```
+
+The command dispatches `IncidentOverdue` for each overdue incident. Listen to it to alert your data protection officer. `IncidentOpened` is dispatched when an incident is registered.
 
 ## Testing
 
@@ -30,21 +63,8 @@ composer test
 
 ## Changelog
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security
-
-If you discover any security related issues, please email the author instead of using the issue tracker.
-
-## Credits
-
-- [jeffersongoncalves](https://github.com/jeffersongoncalves)
-- [All Contributors](../../contributors)
+See [CHANGELOG](CHANGELOG.md).
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). See [License File](LICENSE.md).

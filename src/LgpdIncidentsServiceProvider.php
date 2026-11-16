@@ -2,6 +2,7 @@
 
 namespace JeffersonGoncalves\LgpdIncidents;
 
+use JeffersonGoncalves\LgpdIncidents\Commands\OverdueCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -10,9 +11,14 @@ class LgpdIncidentsServiceProvider extends PackageServiceProvider
     public function configurePackage(Package $package): void
     {
         $package
-            ->name('laravel-lgpd-incidents')
+            ->name('lgpd-incidents')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigrations();
+            ->hasMigrations(['create_lgpd_incidents_table'])
+            ->hasCommand(OverdueCommand::class);
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(IncidentManager::class);
     }
 }
