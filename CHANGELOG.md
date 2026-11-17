@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 - 2026-11-16
+
+- Partial ANPD notice (Res. CD/ANPD 15/2024, art. 6, §3): `notifyAnpd(..., partial: true)` sets `complement_due_at` to the end of the 20th business day after the notice; `complement()` records it. `owesComplement()`, `isComplementOverdue()` and the `complementOverdue` scope.
+- `lgpd:incidents-overdue` also dispatches `IncidentComplementOverdue`.
+- **Upgrade:** publish and run the new migration (`php artisan vendor:publish --tag=lgpd-incidents-migrations && php artisan migrate`).
+
 ## 1.0.0 - 2026-11-16
 
 First release: LGPD security incident register (Resolução CD/ANPD 15/2024).
