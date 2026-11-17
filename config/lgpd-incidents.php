@@ -13,6 +13,12 @@ return [
     'deadline_business_days' => 3,
 
     /*
+     * A partial notice to the ANPD must be complemented within 20 business days of it
+     * (Res. CD/ANPD 15/2024, art. 6, §3). Pass partial: true to notifyAnpd() to track it.
+     */
+    'complement_business_days' => 20,
+
+    /*
      * The incident register must be kept for at least 5 years (Res. 15/2024, art. 10):
      * younger records cannot be deleted.
      */

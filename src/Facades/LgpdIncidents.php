@@ -12,7 +12,8 @@ use JeffersonGoncalves\LgpdIncidents\Models\Incident;
 /**
  * @method static Incident open(string $title, ?DateTimeInterface $discoveredAt = null, array<string, mixed> $attributes = [])
  * @method static Incident assess(Incident $incident, Risk $risk, ?string $measures = null)
- * @method static Incident notifyAnpd(Incident $incident, ?string $protocol = null, ?DateTimeInterface $at = null)
+ * @method static Incident notifyAnpd(Incident $incident, ?string $protocol = null, ?DateTimeInterface $at = null, bool $partial = false)
+ * @method static Incident complement(Incident $incident, ?DateTimeInterface $at = null)
  * @method static Incident notifySubjects(Incident $incident, ?DateTimeInterface $at = null)
  * @method static Incident close(Incident $incident, ?string $measures = null)
  * @method static CarbonImmutable deadline(DateTimeInterface $discoveredAt)

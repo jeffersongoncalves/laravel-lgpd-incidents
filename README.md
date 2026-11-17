@@ -22,6 +22,15 @@ php artisan vendor:publish --tag="lgpd-incidents-migrations"
 php artisan migrate
 ```
 
+### Upgrading from 1.0
+
+Version 1.1 adds two columns that track partial notices, and `lgpd:incidents-overdue` reads them. Publish the new migration and run it:
+
+```bash
+php artisan vendor:publish --tag="lgpd-incidents-migrations"
+php artisan migrate
+```
+
 Small processing agents get double the time (Resolução CD/ANPD 2/2022, art. 14): publish the config and set `deadline_business_days` to `6`. Add state or city holidays in laravel-brazil-holidays' `extra` config.
 
 ## Usage
@@ -46,6 +55,19 @@ LgpdIncidents::close($incident, measures: 'Bucket made private, credentials rota
 
 `$incident->isPending()` is true while a communication is still owed. It stays false for incidents assessed as low risk or closed. `isOverdue()` is true when that communication is past the deadline. Both are also query scopes: `Incident::query()->scopes('overdue')`.
 
+### Partial notice
+
+When you don't have every detail within the deadline, you can notify the ANPD with what you know and send the rest within 20 business days of that notice (art. 6, §3):
+
+```php
+LgpdIncidents::notifyAnpd($incident, protocol: 'ANPD-2026-0042', partial: true);
+$incident->complement_due_at;     // end of the 20th business day after the notice
+$incident->owesComplement();      // true until you record it
+LgpdIncidents::complement($incident);
+```
+
+`isComplementOverdue()` and the `complementOverdue` scope flag the ones past that date.
+
 ### Overdue alerts
 
 ```php
@@ -53,7 +75,7 @@ LgpdIncidents::close($incident, measures: 'Bucket made private, credentials rota
 Schedule::command('lgpd:incidents-overdue')->hourly();
 ```
 
-The command dispatches `IncidentOverdue` for each overdue incident. Listen to it to alert your data protection officer. `IncidentOpened` is dispatched when an incident is registered.
+The command dispatches `IncidentOverdue` for each overdue incident, and `IncidentComplementOverdue` for each overdue complement to a partial notice. Listen to it to alert your data protection officer. `IncidentOpened` is dispatched when an incident is registered.
 
 ## Testing
 

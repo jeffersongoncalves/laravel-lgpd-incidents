@@ -43,9 +43,33 @@ class IncidentManager
         return $this->update($incident, ['risk' => $risk, 'measures' => $measures ?? $incident->getAttribute('measures')]);
     }
 
-    public function notifyAnpd(Incident $incident, ?string $protocol = null, ?DateTimeInterface $at = null): Incident
+    /**
+     * A partial notice owes the complementary information within 20 business days of it (Res. 15/2024, art. 6, §3).
+     */
+    public function notifyAnpd(Incident $incident, ?string $protocol = null, ?DateTimeInterface $at = null, bool $partial = false): Incident
     {
-        return $this->update($incident, ['anpd_notified_at' => $at ?? now(), 'anpd_protocol' => $protocol]);
+        $at ??= now();
+
+        return $this->update($incident, [
+            'anpd_notified_at' => $at,
+            'anpd_protocol' => $protocol,
+            'complement_due_at' => $partial
+                ? $this->holidays->addBusinessDays($at, (int) config('lgpd-incidents.complement_business_days', 20))->endOfDay()
+                : null,
+            'complemented_at' => null,
+        ]);
+    }
+
+    /**
+     * Record that the complementary information was sent to the ANPD.
+     */
+    public function complement(Incident $incident, ?DateTimeInterface $at = null): Incident
+    {
+        if ($incident->complement_due_at === null) {
+            throw new LogicException("Incident [{$incident->getKey()}] has no partial ANPD notice to complement.");
+        }
+
+        return $this->update($incident, ['complemented_at' => $at ?? now()]);
     }
 
     public function notifySubjects(Incident $incident, ?DateTimeInterface $at = null): Incident

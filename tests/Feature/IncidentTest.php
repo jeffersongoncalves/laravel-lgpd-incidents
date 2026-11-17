@@ -4,6 +4,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
 use JeffersonGoncalves\LgpdIncidents\Enums\Risk;
+use JeffersonGoncalves\LgpdIncidents\Events\IncidentComplementOverdue;
 use JeffersonGoncalves\LgpdIncidents\Events\IncidentOpened;
 use JeffersonGoncalves\LgpdIncidents\Events\IncidentOverdue;
 use JeffersonGoncalves\LgpdIncidents\Facades\LgpdIncidents;
@@ -69,6 +70,34 @@ it('flags overdue incidents', function () {
         ->and(Artisan::output())->toContain('1 overdue incident(s).');
     Event::assertDispatched(IncidentOverdue::class, fn (IncidentOverdue $event) => $event->incident->is($overdue));
 });
+
+it('owes the complement of a partial ANPD notice within 20 business days', function () {
+    Event::fake([IncidentComplementOverdue::class]);
+    $incident = LgpdIncidents::open('Leaked backup', Carbon::parse('2026-11-13 10:00'));
+
+    // Notice on Mon 16: 20 business days skip Fri 20 (holiday) and the weekends.
+    LgpdIncidents::notifyAnpd($incident, 'ANPD-1', Carbon::parse('2026-11-16 09:00'), partial: true);
+
+    expect($incident->complement_due_at->toDateString())->toBe('2026-12-15')
+        ->and($incident->owesComplement())->toBeTrue()
+        ->and(LgpdIncidents::notifyAnpd(LgpdIncidents::open('Phishing'))->owesComplement())->toBeFalse();
+
+    $this->travelTo(Carbon::parse('2026-12-16'));
+    Artisan::call('lgpd:incidents-overdue');
+
+    expect($incident->fresh()->isComplementOverdue())->toBeTrue()
+        ->and(Artisan::output())->toContain('1 overdue ANPD complement(s).');
+    Event::assertDispatched(IncidentComplementOverdue::class, fn ($event) => $event->incident->is($incident));
+
+    LgpdIncidents::complement($incident);
+
+    expect($incident->owesComplement())->toBeFalse()
+        ->and(Incident::query()->scopes('complementOverdue')->count())->toBe(0);
+});
+
+it('has nothing to complement after a full notice', function () {
+    LgpdIncidents::complement(LgpdIncidents::notifyAnpd(LgpdIncidents::open('Phishing')));
+})->throws(LogicException::class, 'no partial ANPD notice');
 
 it('requires a risk assessment before closing', function () {
     LgpdIncidents::close(LgpdIncidents::open('Leaked backup'));

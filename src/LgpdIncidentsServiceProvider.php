@@ -13,7 +13,7 @@ class LgpdIncidentsServiceProvider extends PackageServiceProvider
         $package
             ->name('lgpd-incidents')
             ->hasConfigFile()
-            ->hasMigrations(['create_lgpd_incidents_table'])
+            ->hasMigrations(['create_lgpd_incidents_table', 'add_complement_columns_to_lgpd_incidents_table'])
             ->hasCommand(OverdueCommand::class);
     }
 
