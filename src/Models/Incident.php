@@ -17,6 +17,8 @@ use LogicException;
  * @property Carbon|null $anpd_notified_at
  * @property Carbon|null $subjects_notified_at
  * @property Carbon|null $closed_at
+ * @property Carbon|null $complement_due_at set when the ANPD notice was partial
+ * @property Carbon|null $complemented_at
  * @property Carbon $created_at
  */
 class Incident extends Model
@@ -40,6 +42,8 @@ class Incident extends Model
             'anpd_notified_at' => 'datetime',
             'subjects_notified_at' => 'datetime',
             'closed_at' => 'datetime',
+            'complement_due_at' => 'datetime',
+            'complemented_at' => 'datetime',
         ];
     }
 
@@ -67,6 +71,27 @@ class Incident extends Model
     public function isOverdue(): bool
     {
         return $this->isPending() && $this->due_at->isPast();
+    }
+
+    /**
+     * The ANPD notice was partial and its complementary information is still owed.
+     */
+    public function owesComplement(): bool
+    {
+        return $this->complement_due_at !== null && $this->complemented_at === null;
+    }
+
+    public function isComplementOverdue(): bool
+    {
+        return $this->owesComplement() && $this->complement_due_at?->isPast() === true;
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     */
+    public function scopeComplementOverdue(Builder $query): void
+    {
+        $query->whereNull('complemented_at')->where('complement_due_at', '<', now());
     }
 
     /**
