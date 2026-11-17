@@ -22,6 +22,15 @@ php artisan vendor:publish --tag="lgpd-incidents-migrations"
 php artisan migrate
 ```
 
+### Upgrading from 1.0
+
+Version 1.1 adds two columns that track partial notices, and `lgpd:incidents-overdue` reads them. Publish the new migration and run it:
+
+```bash
+php artisan vendor:publish --tag="lgpd-incidents-migrations"
+php artisan migrate
+```
+
 Small processing agents get double the time (Resolução CD/ANPD 2/2022, art. 14): publish the config and set `deadline_business_days` to `6`. Add state or city holidays in laravel-brazil-holidays' `extra` config.
 
 ## Usage
